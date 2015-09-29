@@ -708,6 +708,12 @@ Menu setting
 
     	return $message;
     }
+    
+    public static function manualCron(){
+
+    	return self::postCron();
+    
+    }
 
     private function fetch_image($url) {
         if (function_exists("curl_init")) {
