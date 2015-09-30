@@ -125,6 +125,7 @@ POST KW
 		return 0;
 
 	}
+
 /*
 
 Menu Stat
@@ -271,6 +272,7 @@ Menu setting
 		            settings_fields("section");
 		            do_settings_sections("grabgan-options");      
 		            submit_button(); 
+		            submit_button( "Auto Post", "submit", "manual" );
 		        ?>          
 		    </form>
 			</div>
@@ -330,6 +332,11 @@ Menu setting
 
 			}
 
+		}
+		
+		if (isset($_POST['manual'])) {
+
+			 self::postCron();
 		}
 
 		if (isset($_POST['cron'])) {
@@ -709,9 +716,16 @@ Menu setting
     	return $message;
     }
     
-    public static function manualCron(){
+    public static function manualCron($cron){
 
-    	return self::postCron();
+    	if($cron == 'goyanggan'){
+
+    		return self::postCron();
+
+    	}
+
+    	return false;
+
     
     }
 
