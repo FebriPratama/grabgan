@@ -17,6 +17,9 @@ class ngeGrabGan{
 		add_action("admin_menu", array(&$this, 'add_theme_menu_item'));
 		add_action("admin_init", array(&$this, 'display_grabGan_fields'));
 		add_action( 'grabgan_cron',  array(&$this,'postCron' ) );
+		
+		update_option('grabgan.total_post', '15');
+		update_option('grabgan.total_tag', '5');
 
 		if((get_option('grabgan.cron') == 'off') || (get_option('grabgan.cron') == null)){
 			
@@ -125,7 +128,6 @@ POST KW
 		return 0;
 
 	}
-
 /*
 
 Menu Stat
@@ -265,14 +267,14 @@ Menu setting
 			Total Attachments : <?php echo ngeGrabGan::totalAttachment(); ?><br> 				
 
 			<br>
-			Percentage kw and posted : <?php echo ngeGrabGan::percentagePosted(); ?> %
+			Percentage kw and posted : <?php echo @ngeGrabGan::percentagePosted(); ?> %
 			<hr>
 		    <form method="post" action="options.php">
 		        <?php
 		            settings_fields("section");
 		            do_settings_sections("grabgan-options");      
 		            submit_button(); 
-		            submit_button( "Auto Post", "submit", "manual" );
+		            submit_button( "Auto Post", "submit", "auto" )
 		        ?>          
 		    </form>
 			</div>
@@ -299,7 +301,7 @@ Menu setting
 	{
 		
 		$on = get_option('grabgan.cron') == 'on' ? 'selected' : '';
-		$off =(get_option('grabgan.cron') == 'off') || get_option('grabgan.cron') == null ? 'selected' : '';
+		$off = (get_option('grabgan.cron') == 'off') || get_option('grabgan.cron') == null ? 'selected' : '';
 
 		?>
 			<select name="cron">
@@ -307,6 +309,85 @@ Menu setting
 				<option value="off" <?php echo $off; ?>>Off</option>
 			</select>
 	    <?php
+
+	}
+
+	function display_set_category_opt()
+	{
+
+		$on = get_option('grabgan.cat_opt') == 'on' ? 'selected' : '';
+		$off = (get_option('grabgan.cat_opt') == 'off') || get_option('grabgan.cat_opt') == null ? 'selected' : '';
+
+		?>
+			<select name="grabcategoryopt">
+				<option value="on" <?php echo $on; ?>>On</option>
+				<option value="off" <?php echo $off; ?>>Off</option>
+			</select>
+	    <?php
+
+	}
+
+	function display_set_category()
+	{
+
+		$args = array(
+		        'orderby'   => 'name',
+		        'order'     => 'ASC',
+		        'hide_empty'    => '0',
+		  );
+
+		$categories = get_categories($args);
+
+		?>
+			<select name="grabcategory">
+				<?php
+
+				if (trim(get_option('grabgan.cat_default')) !== '') {
+
+				  	$option = '<option value="'.get_option('grabgan.cat_default').'" selected>';
+					$option .= get_cat_name(get_option('grabgan.cat_default'));
+					$option .= '</option>';
+
+					echo $option;
+
+				}
+
+				foreach ($categories as $category) {
+
+				  	$option = '<option value="'.$category->term_id.'">';
+					$option .= $category->cat_name;
+					$option .= '</option>';
+
+					echo $option;
+
+				  }
+
+			  ?>
+			</select>
+	    <?php
+
+	}
+
+	function display_post_total()
+	{
+
+		?>
+
+	    	<input type="number" value="<?php echo (int)get_option('grabgan.total_post'); ?>" name="totalpost" style="width: 50%;" required>
+	   
+	    <?php
+	    
+	}
+
+	function display_tag_total()
+	{
+
+		?>
+
+	    	<input type="number" value="<?php echo (int)get_option('grabgan.total_tag'); ?>" name="totaltag" style="width: 50%;" required>
+	   
+	    <?php
+	    
 	}
 
 	function kw_masuk_sini(){
@@ -333,20 +414,40 @@ Menu setting
 			}
 
 		}
-		
-		if (isset($_POST['manual'])) {
-
-			 self::postCron();
-		}
 
 		if (isset($_POST['cron'])) {
 
 			 update_option('grabgan.cron', $_POST['cron']);
 		}
 
+		if (isset($_POST['totaltag'])) {
+
+			 update_option('grabgan.total_tag', $_POST['totaltag']);
+		}
+
+		if (isset($_POST['totalpost'])) {
+
+			 update_option('grabgan.total_post', $_POST['totalpost']);
+		}
+
+		if (isset($_POST['grabcategory'])) {
+
+			 update_option('grabgan.cat_default', $_POST['grabcategory']);
+		}
+
+		if (isset($_POST['grabcategoryopt'])) {
+
+			 update_option('grabgan.cat_opt', $_POST['grabcategoryopt']);
+		}
+
 		if (isset($_POST['bingkey'])) {
 
 			 update_option('grabgan.bingkey', $_POST['bingkey']);
+		}
+
+		if (isset($_POST['auto'])) {
+
+			 self::postCron();
 		}
 	}
 
@@ -357,6 +458,10 @@ Menu setting
 		add_settings_field("grabgan.kwlist", "Keyword List<small><br>&nbsp;*keyword perbaris gan</small>", array(&$this, 'display_kw_element'), "grabgan-options", "section");
 		add_settings_field("grabgan.bingkey", "Bing/Azure Client Key", array(&$this, 'display_bing_key_element'), "grabgan-options", "section");
 		add_settings_field("grabgan.cron", "Cron Job", array(&$this, 'display_cron_element'), "grabgan-options", "section");
+		add_settings_field("grabgan.total_post", "Max Total Attachments", array(&$this, 'display_post_total'), "grabgan-options", "section");
+		add_settings_field("grabgan.total_tag", "Max Total Tags", array(&$this, 'display_tag_total'), "grabgan-options", "section");
+		add_settings_field("grabgan.cat_opt", "Category Manual(off untuk otomatis)", array(&$this, 'display_set_category_opt'), "grabgan-options", "section");
+		add_settings_field("grabgan.cat_default", "Category default setiap post", array(&$this, 'display_set_category'), "grabgan-options", "section");
 
 	    register_setting("section", "grabgan.kwlist",array(&$this, 'kw_masuk_sini'));
 	}
@@ -427,9 +532,11 @@ Menu setting
     private function bingSearch($q, $filter = NULL, $top = 40, $skip = NULL) {
 
         $accountKey = get_option('grabgan.bingkey');
+        
+        $filters = "&ImageFilters='Size:Large'";
 
         $request = 'https://api.datamarket.azure.com/Bing/Search/Image?$format=json&$top=' . (int)$top . '&Query=' . urlencode('\'' . $q . '\'');
-        if ($filter) $request = $request . '&ImageFilters=' . urlencode('\'' . $filter . '\'');
+        if ($filter) $request = $request . $filters;
         if ($skip) $request = $request . '&$skip=' . urlencode($skip);
         $gacookie = plugin_dir_path('index.php') . "bing.cookie";
         $arr_curl_option = array(CURLOPT_USERPWD => "ignored:" . $accountKey, CURLOPT_COOKIEFILE => $gacookie, CURLOPT_COOKIEJAR => $gacookie);
@@ -509,7 +616,19 @@ Menu setting
 
 				$tags[$i] = $xmls[1][$i];
 
+				if($i > (int)get_option('grabgan.total_tag')){
+
+					break;
+
+				}
+
 			}
+
+		if(count($tags)<0){
+
+			$tags = explode(" ", get_the_title( $id ));
+
+		}
 
     	wp_set_post_tags( $id, $tags, false );
 
@@ -526,7 +645,7 @@ Menu setting
 
 		$categories = get_categories($args);
 
-    	$cat_id = self::getCat($categories[array_rand($categories)]->term_id);
+    	$cat_id = (get_option('grabgan.cat_opt') == 'off') || get_option('grabgan.cat_opt') == null ? self::getCat($categories[array_rand($categories)]->term_id) : get_option('grabgan.cat_default');
 
     	$status = get_option('grabgan.status') !== null ? 'publish' : get_option('grabgan.status');
 
@@ -553,7 +672,8 @@ Menu setting
 		require_once( ABSPATH . 'wp-admin/includes/image.php' );
 
 		$i=0;
-		$max=10;
+
+		$max= get_option('grabgan.total_post') ? (int)get_option('grabgan.total_post') : 15;
 
 		if(is_null($results)){
 			
@@ -662,21 +782,20 @@ Menu setting
 								  
 								wp_update_post( $my_post );
 
-			  				return 'kw '.get_the_title().' : sukses, updating status';
+			  				return true;
 
 			  			}else if($startAuto == 2){
 
-			  				return 'Bing return null : check token gan';
+			  				return false;
 
 			  			}else{
 
-			  				return 'pokoknya error gan, bisa karna gambar code errornya :'.$startAuto;
+			  				return false;
 
 			  			}
 
+			  			break;
 			  		}
-			  		
-			  		break;
 
 			  endwhile;
 			}
@@ -685,7 +804,7 @@ Menu setting
 
 		}else{
 
-			return 'Bing key is required';
+			return false;
 
 
 		}
@@ -716,17 +835,15 @@ Menu setting
     	return $message;
     }
     
-    public static function manualCron($cron){
+    public static function manualCron($get){
 
-    	if($cron == 'goyanggan'){
+		if($get=='goyanggan'){
 
-    		return self::postCron();
-
-    	}
-
-    	return false;
-
-    
+           return $message = self::postCron();
+        
+        }
+        
+        return false;
     }
 
     private function fetch_image($url) {
