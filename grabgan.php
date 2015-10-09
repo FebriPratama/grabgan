@@ -18,8 +18,8 @@ class ngeGrabGan{
 		add_action("admin_init", array(&$this, 'display_grabGan_fields'));
 		add_action( 'grabgan_cron',  array(&$this,'postCron' ) );
 		
-		update_option('grabgan.total_post', '15');
-		update_option('grabgan.total_tag', '5');
+		get_option('grabgan.total_post') == null ? update_option('grabgan.total_post', '15') : null;
+		get_option('grabgan.total_tag') == null ? update_option('grabgan.total_tag', '5') : null;
 
 		if((get_option('grabgan.cron') == 'off') || (get_option('grabgan.cron') == null)){
 			
@@ -99,7 +99,7 @@ POST KW
 		$my_post = array(
 		  'post_title'    => $kw,
 		  'post_content'  => 'true',
-		  'post_status'   => 'private',
+		  'post_status'   => 'publish',
 		  'post_type' 	  => 'kw'
 		);
 
@@ -135,7 +135,7 @@ Menu Stat
 */
 	public static function totalKw(){
 
-		$my_query = new WP_Query( array( 'post_type' => 'kw') );
+		$my_query = new WP_Query( array( 'post_type' => 'kw','posts_per_page' => -1) );
 
 		$i = 0;
 		
@@ -154,7 +154,7 @@ Menu Stat
 
 	public static function totalPost(){
 
-		$my_query = new WP_Query( array( 'post_type' => 'post') );
+		$my_query = new WP_Query( array( 'post_type' => 'post','posts_per_page' => -1) );
 
 		$i = 0;
 		
@@ -173,7 +173,7 @@ Menu Stat
 
 	public static function totalPosted(){
 
-		$my_query = new WP_Query( array( 'post_type' => 'kw') );
+		$my_query = new WP_Query( array( 'post_type' => 'kw','posts_per_page' => -1) );
 
 		$i = 0;
 
@@ -197,7 +197,7 @@ Menu Stat
 	public static function totalAttachment(){
 
 		$posts = get_posts( array(
-		                         'post_type' => 'attachment'
+		                         'post_type' => 'attachment','posts_per_page' => -1
 		                     ) );
 
 		return count( $posts );
@@ -254,9 +254,10 @@ Menu setting
 				<ol>
 					<li>Harus ada category dulu selain uncategorized kalau gk ada category dia akan mengulang(rekursif) sampai dapat. Jadi bisa bikin memory jebol</li>
 					<li>Untuk test posting harus input keyword -> plugin settingnya terus isi kwnya perbaris,</li>
-					<li>Isi bing api jgn lupa, bingung ? mbah google belum tidur</li>
-					<li>Untuk auto posting menggunakan cron job menggunakan <a href="https://wordpress.org/plugins/easycron/" target="_BLANK">easycron plugin</a>. Kalau pingin pas ada visitor baru post copykan script ini ke header.php : <?php highlight_string('<?php ngeGrabGan::randomPostAuto(); ?>'); ?> (Akan posting pada detik tertentu secara random jadi jika ada 100 visitor dalam 1 detik maka dia akan posting sebanyak itu)</li>
-					<li>Untuk link cron job : <pre>http://www.web-agan.com/wp-cron.php</pre></li>
+					<li>Isi bing api jgn lupa</li>
+					<li>Untuk cron pasang script php ini di header.php : <pre>if(isset($_GET['cron'])) echo ngeGrabGan::manualCron($_GET['cron']);</pre></li>
+					<li>Link cron : http://www.web-agan.com/?cron=goyanggan</li>
+					<li>Perintah cron : wget -O - http://www.web-agan.com/?cron=goyanggan >/dev/null 2>&1</li>
 				</ol>
 			</blockquote>
 			<hr>
@@ -274,7 +275,8 @@ Menu setting
 		            settings_fields("section");
 		            do_settings_sections("grabgan-options");      
 		            submit_button(); 
-		            submit_button( "Auto Post", "submit", "auto" )
+		            submit_button( "Auto Post", "submit", "auto" );
+
 		        ?>          
 		    </form>
 			</div>
@@ -325,6 +327,47 @@ Menu setting
 			</select>
 	    <?php
 
+	}
+
+	function display_set_fafifu_opt()
+	{
+
+		$on = get_option('grabgan.fafifu_opt') == 'on' ? 'selected' : '';
+		$off = (get_option('grabgan.fafifu_opt') == 'off') || get_option('grabgan.fafifu_opt') == null ? 'selected' : '';
+
+		?>
+			<select name="fafifuopt">
+				<option value="on" <?php echo $on; ?>>On</option>
+				<option value="off" <?php echo $off; ?>>Off</option>
+			</select>
+	    <?php
+
+	}
+
+	function display_set_backdate_opt()
+	{
+
+		$on = get_option('grabgan.backdate_opt') == 'on' ? 'selected' : '';
+		$off = (get_option('grabgan.backdate_opt') == 'off') || get_option('grabgan.backdate_opt') == null ? 'selected' : '';
+
+		?>
+			<select name="backdateopt">
+				<option value="on" <?php echo $on; ?>>On</option>
+				<option value="off" <?php echo $off; ?>>Off</option>
+			</select>
+	    <?php
+
+	}
+
+	function display_set_backdate()
+	{
+
+		?>
+
+	    	<input type="number" value="<?php echo (int)get_option('grabgan.backdate') == null ? 0 : (int)get_option('grabgan.backdate'); ?>" name="backdate" style="width: 50%;">
+	   
+	    <?php
+	    
 	}
 
 	function display_set_category()
@@ -430,6 +473,11 @@ Menu setting
 			 update_option('grabgan.total_post', $_POST['totalpost']);
 		}
 
+		if (isset($_POST['fafifuopt'])) {
+
+			 update_option('grabgan.fafifu_opt', $_POST['fafifuopt']);
+		}
+
 		if (isset($_POST['grabcategory'])) {
 
 			 update_option('grabgan.cat_default', $_POST['grabcategory']);
@@ -438,6 +486,16 @@ Menu setting
 		if (isset($_POST['grabcategoryopt'])) {
 
 			 update_option('grabgan.cat_opt', $_POST['grabcategoryopt']);
+		}
+
+		if (isset($_POST['backdateopt'])) {
+
+			 update_option('grabgan.backdate_opt', $_POST['backdateopt']);
+		}
+
+		if (isset($_POST['backdate'])) {
+
+			 update_option('grabgan.backdate', $_POST['backdate']);
 		}
 
 		if (isset($_POST['bingkey'])) {
@@ -449,6 +507,7 @@ Menu setting
 
 			 self::postCron();
 		}
+
 	}
 
 	function display_grabGan_fields()
@@ -462,6 +521,10 @@ Menu setting
 		add_settings_field("grabgan.total_tag", "Max Total Tags", array(&$this, 'display_tag_total'), "grabgan-options", "section");
 		add_settings_field("grabgan.cat_opt", "Category Manual(off untuk otomatis)", array(&$this, 'display_set_category_opt'), "grabgan-options", "section");
 		add_settings_field("grabgan.cat_default", "Category default setiap post", array(&$this, 'display_set_category'), "grabgan-options", "section");
+
+		add_settings_field("grabgan.backdate_opt", "Backdate Status", array(&$this, 'display_set_backdate_opt'), "grabgan-options", "section");
+		add_settings_field("grabgan.backdate", "Nilai Backdate (Bulan)", array(&$this, 'display_set_backdate'), "grabgan-options", "section");
+		add_settings_field("grabgan.fafifu_opt", "Fafifu Status", array(&$this, 'display_set_fafifu_opt'), "grabgan-options", "section");
 
 	    register_setting("section", "grabgan.kwlist",array(&$this, 'kw_masuk_sini'));
 	}
@@ -478,7 +541,7 @@ Menu setting
 	bing search
 
 */
-    public function httpCall($url = '', $referer = '', $post_call = FALSE, $postdata = '', $include_header = FALSE, $arr_curl_option = array()) {
+    public static function httpCall($url = '', $referer = '', $post_call = FALSE, $postdata = '', $include_header = FALSE, $arr_curl_option = array()) {
 
         $arr_result = array();
         $cookie_file = plugin_dir_path('index.php') . "grabgan.cookie";
@@ -529,7 +592,7 @@ Menu setting
 
     }
 
-    private function bingSearch($q, $filter = NULL, $top = 40, $skip = NULL) {
+    private static function bingSearch($q, $filter = NULL, $top = 40, $skip = NULL) {
 
         $accountKey = get_option('grabgan.bingkey');
         
@@ -578,7 +641,7 @@ Menu setting
 
     }
 
-    public function generatePostTitle($kw){
+    public static function generatePostTitle($kw){
 
 		$blakang=array("Decorating Ideas", "Design Ideas","Decoration Ideas","Decor","Ideas","Design", "Gallery");
 
@@ -586,7 +649,7 @@ Menu setting
     	
     }
 
-    public function generateAttachtmentTitle($kw){
+    public static function generateAttachtmentTitle($kw){
 
 		$awal=array("New", "Cool", "Unique", "Nice", "Luxury", "Modest", "Awesome", "Amazing", "Fresh", "Popular", "Awesome", "Custom", "Modern", "Inspiring" , "Simple", "Classic", "Excellent", "Perfect", "Cute", "Cheap", "Impressive", "Best", "Trend", "Innovative", "Great" , "Wonderful", "Impressive", "Contemporary" );
 
@@ -602,7 +665,7 @@ Menu setting
     	
     }
 
-    public function generateTag($kw,$id){
+    public static function generateTag($kw,$id){
 
 		$payload='https://suggestqueries.google.com/complete/search?client=firefox&q='.urlencode($kw);
 
@@ -634,7 +697,65 @@ Menu setting
 
     }
 
-    public function newAuto($kw){
+    public static function generateBackdate(){
+    	
+    	if( (get_option('grabgan.backdate_opt') == 'on') ){
+			
+			$total = get_option('grabgan.backdate') !== null ? (int)get_option('grabgan.backdate') : 0;
+
+    		return date('Y-m-d H:i:s', strtotime('-'.$total.' month', strtotime(date('Y-m-d H:i:s'))));
+
+    	}
+
+    	return false;
+    }
+
+    public static function generateFafifu($postid,$type){
+
+    	if( (get_option('grabgan.fafifu_opt') == 'on') ){
+
+			$p = get_post($postid);
+
+			$c = get_the_category($postid);
+
+			$tag = wp_get_post_tags($postid);
+
+				$name = '';
+
+				$i=0;
+
+				foreach($tag as $t){
+
+					$name = $i == 0 ? $t->name : $name.','.$t->name;
+
+					$i++;
+
+				}
+
+			$fafifu = $p->post_title.', Category '. $c->name .' With Resolution '.rand(450,1200).' x '.rand(450,1200).' pixel, Size Decorating Ideas is '. rand(500,1000).' kb, Published By '. the_author_meta( 'user_nicename' , $p->post_author ) .', Tagged of '. $name ;
+
+			if($type=='post'){
+
+				$my_post = array(
+				    'ID'           => $postid,
+				    'post_content' => $fafifu
+				);
+				  
+				wp_update_post( $my_post );
+
+				return true;
+
+			}
+
+
+			return $fafifu;
+
+		}
+
+		return false;
+    }
+
+    public static function newAuto($kw,$kw_id){
 
 		//create new post
 		$args = array(
@@ -649,14 +770,22 @@ Menu setting
 
     	$status = get_option('grabgan.status') !== null ? 'publish' : get_option('grabgan.status');
 
+    	//backdate
+    	$date = self::generateBackdate();    	
+    	
     	$data = array(
 
     		'post_title' => self::generatePostTitle($kw), 
+    		'post_date' => $date,
+    		'post_date_gmt' => $date,
     		'post_status' => $status
 
     	);
 
     	$post_id = wp_insert_post($data);
+
+    	//generate fafifu
+    	$fafifu = self::generateFafifu($post_id,'post');
 
     	//set category
 		$cat_ids = array( (int)$cat_id );
@@ -705,10 +834,15 @@ Menu setting
 
 				if ($fileSaved) {
 
+			    	//generate fafifu
+			    	$fafifu = self::generateFafifu($post_id,'attachment');
+
 		            $attachment = array(
 		            	'post_mime_type' => $wp_filetype['type'], 
 		            	'post_title' => $title, 
-		            	'post_content' => '', 
+			    		'post_date' => $date,
+			    		'post_date_gmt' => $date,
+		            	'post_content' => $fafifu, 
 		            	'guid' => $uploads['url'] . "/" . $filename
 		            );
 
@@ -752,26 +886,44 @@ Menu setting
 
         	wp_delete_post( $post_id, true );
 
-        	return $error;
+			$my_post = array(
+			    'ID'           => $kw_id,
+			    'post_content' => 'banned'
+			);
+			  
+			wp_update_post( $my_post );
+
+        	return trim($error) == null ? 'Kw Banned' : $error;
 
         }
 
         return 1;
     }
 
-    public function postCron(){
+    public static function postCron(){
 
 		//ambil post type kw
 		if(get_option('grabgan.bingkey') !== null){
 
-			$my_query = new WP_Query( array( 'post_type' => 'kw') );
+			$total = wp_count_posts( 'kw' );
 
-			if( $my_query->have_posts() ) {
-			  while ($my_query->have_posts()) : $my_query->the_post(); 
+			$queryCron = new WP_Query( array( 'post_type' => 'kw', 'posts_per_page' => -1,"s" => "true") );
+			
+			$title = '';
+			$i=1;
+			
+			//var_dump($queryCron);
+
+			if( $queryCron->have_posts() ) {
+			  while ($queryCron->have_posts()) : $queryCron->the_post(); 
+			  		
+			  		$title = $title.'<br>'.$i.'.'.get_the_title() .' status :'. get_the_content() .' total scan : '.$i;
 
 			  		if(get_the_content() == 'true'){
 
-			  			$startAuto = self::newAuto(get_the_title());
+			  			$startAuto = self::newAuto(get_the_title(),get_the_ID());
+
+			  			var_dump($startAuto);
 
 			  			if($startAuto == 1){
 
@@ -782,33 +934,47 @@ Menu setting
 								  
 								wp_update_post( $my_post );
 
-			  				return true;
+							wp_reset_query();
+			  				return 'Successfully';
 
 			  			}else if($startAuto == 2){
 
-			  				return false;
+			  				wp_reset_query();
+			  				return 'Kosong, respone : '.$startAuto;
 
 			  			}else{
 
-			  				return false;
+			  				wp_reset_query();
+			  				return 'Mbuh, respone : '.$startAuto;
 
 			  			}
 
 			  			break;
-			  		}
+						
+			  		}  	
+
+			  		$i++;
 
 			  endwhile;
+
+			  wp_reset_query();
+
+			  return 'Gak Ketemu kw yang aktif, log : '.$title;
+
 			}
 
-			wp_reset_query();    	
+			wp_reset_query();  
 
+			return 'Post Kosong';
+			
 		}else{
 
-			return false;
+			return 'No bing Key';
 
 
 		}
 
+		return 'Not Found';
     }
 
     public static function randomPostAuto(){
@@ -837,16 +1003,21 @@ Menu setting
     
     public static function manualCron($get){
 
-		if($get=='goyanggan'){
+		if((get_option('grabgan.cron') == 'on') || (get_option('grabgan.cron') !== null)){
 
-           return $message = self::postCron();
-        
+			if($get=='goyanggan'){
+
+	           return $message = self::postCron();
+	        
+	        }
+        	
+        	return false;
         }
-        
-        return false;
+
+        return 'cron mati gan, aktifin dulu';
     }
 
-    private function fetch_image($url) {
+    private static function fetch_image($url) {
         if (function_exists("curl_init")) {
             return self::curl_fetch_image($url);
         } elseif (ini_get("allow_url_fopen")) {
@@ -854,7 +1025,7 @@ Menu setting
         }
     }
 
-    private function curl_fetch_image($url) {
+    private static function curl_fetch_image($url) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
