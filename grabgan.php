@@ -1,6 +1,6 @@
 <?php
 /*
-	Plugin Name: Katanya Plugin Grab Image
+	Plugin Name: Katanya Plugin Grab Image Untuk wordpress
 	Plugin URI: http://www.febripratama.com
 	Description: Katanya sih buat ngegrab
 	Author: Pratama, Febri
