@@ -649,7 +649,7 @@ Menu setting
     	
     }
 
-    public static function generateAttachtmentTitle($kw){
+    public static function generateAttachtmentTitle($title,$kw){
 
 		$awal=array("New", "Cool", "Unique", "Nice", "Luxury", "Modest", "Awesome", "Amazing", "Fresh", "Popular", "Awesome", "Custom", "Modern", "Inspiring" , "Simple", "Classic", "Excellent", "Perfect", "Cute", "Cheap", "Impressive", "Best", "Trend", "Innovative", "Great" , "Wonderful", "Impressive", "Contemporary" );
 
@@ -661,7 +661,7 @@ Menu setting
 
 		$sambung=array("At","In","On","New On","Fresh at","New in","Fresh In","Fresh On","New At");
 
-		return $title = $awal[rand ( 0 , count($awal)-1 )].' '.$tengah[rand ( 0 , count($tengah)-1 )].' '.$kw.' '.$akhir[rand ( 0 , count($akhir)-1 )].' '.$blakang[rand ( 0 , count($blakang)-1 )];
+		return $title = $awal[rand ( 0 , count($awal)-1 )].' '.$tengah[rand ( 0 , count($tengah)-1 )].' '.$title.' '.$kw.' '.$akhir[rand ( 0 , count($akhir)-1 )].' '.$blakang[rand ( 0 , count($blakang)-1 )];
     	
     }
 
@@ -816,7 +816,9 @@ Menu setting
 
 			$uploads = wp_upload_dir();
 			
-			$title = self::generateAttachtmentTitle($kw);
+			$fileTitle = pathinfo($url);
+			
+			$title = self::generateAttachtmentTitle(str_replace('-',' ',$fileTitle['filename']),$kw);
 
 			$filename = wp_unique_filename($uploads['path'], $url, $unique_filename_callback = NULL);
 
