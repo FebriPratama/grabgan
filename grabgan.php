@@ -197,7 +197,7 @@ Menu Stat
 	public static function totalAttachment(){
 
 		$posts = get_posts( array(
-		                         'post_type' => 'attachment','posts_per_page' => -1
+		                         'post_type' => 'attachment','numberposts' => -1
 		                     ) );
 
 		return count( $posts );
@@ -265,7 +265,7 @@ Menu setting
 			Total Keywords : <?php echo ngeGrabGan::totalKw(); ?><br>
 			Total Posted Keywords : <?php echo ngeGrabGan::totalPosted(); ?><br>
 			Total Posts : <?php echo ngeGrabGan::totalPost(); ?><br>
-			Total Attachments : <?php echo ngeGrabGan::totalAttachment(); ?><br> 				
+			Total Attachments : <?php //echo ngeGrabGan::totalAttachment(); ?>{{ FOR FIX LATER(WP API UPDATE 1.20 ) }}<br> 				
 
 			<br>
 			Percentage kw and posted : <?php echo @ngeGrabGan::percentagePosted(); ?> %
