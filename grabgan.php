@@ -832,9 +832,9 @@ Menu setting
 
 				$image_string = self::fetch_image($url);	
 
-	            $fileSaved = @file_put_contents($uploads['path'] . "/" . $filename, $image_string);
+	            $fileSaved = file_put_contents($uploads['path'] . "/" . $filename, $image_string);
 
-				if ($fileSaved) {
+				if ($fileSaved !== FALSE) {
 
 			    	//generate fafifu
 			    	$fafifu = self::generateFafifu($post_id,'attachment');
