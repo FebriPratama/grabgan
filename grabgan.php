@@ -4,12 +4,12 @@
 	Plugin URI: http://www.febripratama.com
 	Description: Katanya sih buat ngegrab
 	Author: Pratama, Febri
-	Version: 1.0
+	Version: 2.0
 	Author URI: http://www.febripratama.com
 
 */
 
-class ngeGrabGan{
+class ngeGrabGan2{
 
 	function __construct(){
 
@@ -205,8 +205,8 @@ Menu Stat
 
 	public static function percentagePosted(){
 
-		$total = (int)ngeGrabGan::totalKw();
-		$posted = (int)ngeGrabGan::totalPosted();
+		$total = (int)ngeGrabGan2::totalKw();
+		$posted = (int)ngeGrabGan2::totalPosted();
 
 		return (int)($posted/$total * 100) ;
 	}
@@ -254,21 +254,20 @@ Menu setting
 				<ol>
 					<li>Harus ada category dulu selain uncategorized kalau gk ada category dia akan mengulang(rekursif) sampai dapat. Jadi bisa bikin memory jebol</li>
 					<li>Untuk test posting harus input keyword -> plugin settingnya terus isi kwnya perbaris,</li>
-					<li>Isi bing api jgn lupa</li>
-					<li>Untuk cron pasang script php ini di header.php : <pre>if(isset($_GET['cron'])) echo ngeGrabGan::manualCron($_GET['cron']);</pre></li>
+					<li>Untuk cron pasang script php ini di header.php : <pre>if(isset($_GET['cron'])) echo ngeGrabGan2::manualCron($_GET['cron']);</pre></li>
 					<li>Link cron : http://www.web-agan.com/?cron=goyanggan</li>
 					<li>Perintah cron : wget -O - http://www.web-agan.com/?cron=goyanggan >/dev/null 2>&1</li>
 				</ol>
 			</blockquote>
 			<hr>
 			<H4>Plugin Status</H4>
-			Total Keywords : <?php echo ngeGrabGan::totalKw(); ?><br>
-			Total Posted Keywords : <?php echo ngeGrabGan::totalPosted(); ?><br>
-			Total Posts : <?php echo ngeGrabGan::totalPost(); ?><br>
-			Total Attachments : <?php //echo ngeGrabGan::totalAttachment(); ?>{{ FOR FIX LATER(WP API UPDATE 1.20 ) }}<br> 				
+			Total Keywords : <?php echo ngeGrabGan2::totalKw(); ?><br>
+			Total Posted Keywords : <?php echo ngeGrabGan2::totalPosted(); ?><br>
+			Total Posts : <?php echo ngeGrabGan2::totalPost(); ?><br>
+			Total Attachments : <?php //echo ngeGrabGan2::totalAttachment(); ?>{{ FOR FIX LATER(WP API UPDATE 1.20 ) }}<br> 				
 
 			<br>
-			Percentage kw and posted : <?php echo @ngeGrabGan::percentagePosted(); ?> %
+			Percentage kw and posted : <?php echo @ngeGrabGan2::percentagePosted(); ?> %
 			<hr>
 		    <form method="post" action="options.php">
 		        <?php
@@ -295,7 +294,7 @@ Menu setting
 	function display_bing_key_element()
 	{
 		?>
-	    	<input type="text" value="<?php echo get_option('grabgan.bingkey'); ?>" name="bingkey" style="width: 50%;" placeholder="Bing/Azure Client Key(kalau gk tau googling gan)" required>
+	    	<input type="hidden" value="<?php echo get_option('grabgan.bingkey'); ?>" name="bingkey" style="width: 50%;" placeholder="Bing/Azure Client Key(kalau gk tau googling gan)" required>
 	    <?php
 	}
 
@@ -446,7 +445,7 @@ Menu setting
 
 	            for($i=0;$i<$tot;$i++){
 
-	                if(ngeGrabGan::storeKw($parse[$i])){
+	                if(ngeGrabGan2::storeKw($parse[$i])){
 
 	                	$w=$i;
 
@@ -515,7 +514,7 @@ Menu setting
 		add_settings_section("section", "All Settings", null, "grabgan-options");
 		
 		add_settings_field("grabgan.kwlist", "Keyword List<small><br>&nbsp;*keyword perbaris gan</small>", array(&$this, 'display_kw_element'), "grabgan-options", "section");
-		add_settings_field("grabgan.bingkey", "Bing/Azure Client Key", array(&$this, 'display_bing_key_element'), "grabgan-options", "section");
+		//add_settings_field("grabgan.bingkey", "Bing/Azure Client Key", array(&$this, 'display_bing_key_element'), "grabgan-options", "section");
 		add_settings_field("grabgan.cron", "Cron Job", array(&$this, 'display_cron_element'), "grabgan-options", "section");
 		add_settings_field("grabgan.total_post", "Max Total Attachments", array(&$this, 'display_post_total'), "grabgan-options", "section");
 		add_settings_field("grabgan.total_tag", "Max Total Tags", array(&$this, 'display_tag_total'), "grabgan-options", "section");
@@ -862,7 +861,7 @@ Menu setting
 
 		}
 
-		foreach ($results['data'] => $value){
+		foreach ($results['data'] as $value){
 
 			$url = $value['url'];
 
@@ -1138,4 +1137,4 @@ Menu setting
 
 }
 
-$grabGan = new ngeGrabGan();
+$grabGan = new ngeGrabGan2();
