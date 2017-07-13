@@ -4,10 +4,15 @@
 	Plugin URI: http://www.febripratama.com
 	Description: Katanya sih buat ngegrab
 	Author: Pratama, Febri
-	Version: 2.0
+	Version: 3.0
 	Author URI: http://www.febripratama.com
 
 */
+require_once 'vendor/autoload.php';
+require_once 'bing/src/Bing.php';
+require_once 'bing/src/Image.php';
+
+use Buchin\Bing\Image;
 
 class ngeGrabGan2{
 
@@ -620,6 +625,46 @@ Menu setting
 
     }
 
+	private static function doMagicBing($kw){
+
+	  $imageScraper = new Image;
+
+	  $data = [];
+
+		  $niche = array(
+
+		    'default' => array(
+		      'keygrab' => array("Design Ideas","Ideas","Design","Plan","Idea")
+		      )
+
+		    );
+
+	      foreach($niche['default']['keygrab'] as $b){
+	        
+	          $q = (strpos($kw, $b) !== false) ? $kw : $kw .' '.$b;
+	          $resuls = $imageScraper->scrape($q);
+
+	          foreach($resuls as $fook){
+	            
+	            $data[] = array(
+
+	              'url' => $fook['mediaurl'],
+	              'title' => $fook['title'],
+	              'thumb' => $fook['thumburl'],
+	              'width' => explode(' ', $fook['size'])[0],
+	              'height' => explode(' ', $fook['size'])[2],
+	              'type' => explode(' ', $fook['size'])[3]
+
+	              );
+
+	          }
+
+	      }
+
+	  	return $data;
+	  
+	}
+
 	private static function doMagicGoogle($q){
 
 	    $curl = curl_init();
@@ -847,7 +892,7 @@ Menu setting
     	self::generateTag($kw,$post_id);
 
     	//fetch bing api
-		$results = self::doMagicGoogle($kw.' ideas');
+		$results = self::doMagicBing($kw);
 
 		require_once( ABSPATH . 'wp-admin/includes/image.php' );
 
@@ -855,13 +900,35 @@ Menu setting
 
 		$max= get_option('grabgan.total_post') ? (int)get_option('grabgan.total_post') : 15;
 
-		if(count($results['data']) < 1){
+	      $imgs = array();
+
+	        foreach($results as $a) 
+	        {
+
+	          $title = trim($a['title']) == '' || ( count(explode(' ', $a['title'])) < 2 ) ? $q : $a['title'];
+
+	            $sql_fields = array(
+
+	                'term'  => $title,
+	                'url'  => $a['url'],
+	                'height' => array_key_exists('height', $a) ? $a['height'] : 200,
+	                'width' => array_key_exists('width', $a) ? $a['width'] : 200,
+	                'thumb' => $a['thumb'],
+	                'type'    => array_key_exists('type', $a) ? $a['type'] : 'jpeg'
+
+	                ); 
+
+	            $imgs[] = $sql_fields;  
+
+	        }
+
+		if(count($imgs) < 1){
 			
 			return 2;
 
 		}
 
-		foreach ($results['data'] as $value){
+		foreach ($imgs as $value){
 
 			$url = $value['url'];
 
