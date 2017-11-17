@@ -8,9 +8,9 @@
 	Author URI: http://www.febripratama.com
 
 */
-require_once 'vendor/autoload.php';
-require_once 'bing/src/Bing.php';
-require_once 'bing/src/Image.php';
+require_once("vendor/autoload.php");
+require_once("bing/src/Bing.php");
+require_once("bing/src/Image.php");
 
 use Buchin\Bing\Image;
 
