@@ -739,25 +739,26 @@ Menu setting
 
     public static function generatePostTitle($kw){
 
-		$blakang=array("Decorating Ideas", "Design Ideas","Decoration Ideas","Decor","Ideas","Design", "Gallery");
-
+		$blakang=array("Decoration", "Plan", "Concept", "Property", "Design", "Pict", "Ideas", "Image", "Decor", "Style", "Collection", "Set", "Paint", "Model", "Minimalist", "Photos", "Gallery");
 		return $title = $kw.' '.$blakang[rand ( 0 , count($blakang)-1 )];
     	
     }
 
     public static function generateAttachtmentTitle($title,$kw){
 
-		$awal=array("New", "Cool", "Unique", "Nice", "Luxury", "Modest", "Awesome", "Amazing", "Fresh", "Popular", "Awesome", "Custom", "Modern", "Inspiring" , "Simple", "Classic", "Excellent", "Perfect", "Cute", "Cheap", "Impressive", "Best", "Trend", "Innovative", "Great" , "Wonderful", "Impressive", "Contemporary" );
+    	$title = preg_replace('/\.[^.\s]{3,4}$/', '', $title);
+    	
+		$awal=array("New", "Cool", "Unique", "Nice", "Luxury", "Modest", "Awesome", "Amazing", "Popular", "Awesome", "Custom", "Modern", "Inspiring" , "Classic", "Excellent", "Perfect", "Cute", "Cheap", "Impressive", "Best", "Trend", "Innovative", "Great" , "Wonderful", "Impressive", "Contemporary", "Beauteous", "Winsome", "Attractive", "Prepossessing", "Captivating", "Enchanting", "Magnificent", "Fair", "Tasty", "Ravishing", "Remarkable", "Comely", "Appalling", "Wonderful", "Interesting", "Alluring", "Surprising", "Astonishing", "Astounding", "Pleasant", "Delectable", "Heavenly", "Fascinating", "Entrancing", "Adorable", "Endearing", "Exciting", "Divine", "Charming", "Stunning", "Prepossessing", "Splendid", "Engaging", "Personable", "Mesmerizing", "Heavenly", "Lovely", "Terrific", "Exquisite", "Glamorous", "Extraordinary", "Marvelous", "Picturesque", "Amusing", "Good Looking", "Agreeable", "Inspiring", "Winning", "Gorgeous", "Ravishing", "Catchy");
 
-		$tengah=array("Picture of", "Photo of", "Photos of", "Image of", "Images of");
+		$tengah=array("Kitchen", "Bathroom", "Bedroom", "Sofa", "Fireplace", "Dining Room", "Wall Ideas", "Curtain", "Backyard", "Living Room", "Backyard", "Landscape", "Apartment", "Exterior", "Furniture", "Interior", "Kids Room", "Office", "Pool", "Dining Table", "Architecture", "Family Room", "Garden", "Outdoor Room", "Home Office", "Study Room", "Software", "Lighting", "Bathroom Accessories", "Home Security", "Home Tips", "Stair Railings", "Paint Color", "Window", "Storage", "Laundry Room", "Fireplace", "Patio");
 
-		$akhir=array("Design", "Interior", "Exterior", "Ideas", "Remodelling", "Decoration", "Collection", "Style", "Concept", "Photography", "Creative", "Plans Free", "Decoration", "Minimalist", "Set", "Model", "Painting", "Property" );
+		$akhir=array("Design", "Interior", "Exterior", "Ideas", "Remodelling", "Decoration", "Collection", "Style", "Concept", "Photography", "Creative", "Plans Free", "Decoration", "Minimalist", "Set", "Model", "Painting", "Property", "Charming", "Interior Home Design", "Picture", "Small Room", "Modern", "Decor Ideas");
 
-		$blakang=array("Decorating Ideas", "Design Ideas","Decoration Ideas","Decor","Ideas","Design", "Gallery");
+		$blakang=array("Decorating Ideas", "Design Ideas","Decoration Ideas","Decor","Ideas","Design", "View", "Gallery","set");
 
-		$sambung=array("At","In","On","New On","Fresh at","New in","Fresh In","Fresh On","New At");
+		$sambung=array("At", "Fresh at","New in","Fresh In","Fresh On","New At", "By", "For", "And", "With", "In", "Of", "Or Other", "A", "Is Like", "On");
 
-		return $title = $awal[rand ( 0 , count($awal)-1 )].' '.$tengah[rand ( 0 , count($tengah)-1 )].' '.$title.' '.$kw.' '.$akhir[rand ( 0 , count($akhir)-1 )].' '.$blakang[rand ( 0 , count($blakang)-1 )];
+		return $title = $awal[rand ( 0 , count($awal)-1 )].' '.$title.' '.$tengah[rand ( 0 , count($tengah)-1 )].' '.$akhir[rand ( 0 , count($akhir)-1 )].' '.$sambung[rand ( 0 , count($sambung)-1 )].' '.$kw.' '.$blakang[rand ( 0 , count($blakang)-1 )];
     	
     }
 
@@ -852,6 +853,8 @@ Menu setting
     }
 
     public static function newAuto($kw,$kw_id){
+    	
+    	set_time_limit(-1);
 
 		//create new post
 		$args = array(
@@ -938,7 +941,7 @@ Menu setting
 			
 			$title = self::generateAttachtmentTitle(str_replace('-',' ',$fileTitle['filename']),$kw);
 
-			$filename = wp_unique_filename($uploads['path'], $url, $unique_filename_callback = NULL);
+			$filename = wp_unique_filename($uploads['path'], $title.'.'.$fileTitle['extension']);
 
 			$parent_post_id = $post_id;
 
@@ -948,11 +951,11 @@ Menu setting
 
 	            $fullpathfilename = $uploads['path'] . "/" . $filename;
 
-				$image_string = self::fetch_image($url);	
+				$image_string = self::makeCurlCall($url);	
 
-	            $fileSaved = file_put_contents($uploads['path'] . "/" . $filename, $image_string);
+				if ($image_string) {
 
-				if ($fileSaved !== FALSE) {
+	            	$fileSaved = file_put_contents($uploads['path'] . "/" . $filename, $image_string);
 
 			    	//generate fafifu
 			    	$fafifu = self::generateFafifu($post_id,'attachment');
@@ -1042,8 +1045,6 @@ Menu setting
 			  		if(get_the_content() == 'true'){
 
 			  			$startAuto = self::newAuto(get_the_title(),get_the_ID());
-
-			  			var_dump($startAuto);
 
 			  			if($startAuto == 1){
 
@@ -1144,6 +1145,38 @@ Menu setting
             return self::fopen_fetch_image($url);
         }
     }
+
+    private static function makeCurlCall($url){
+
+	  $curl = curl_init();
+	  $timeout = 60;
+	  curl_setopt($curl,CURLOPT_URL,$url);
+	  curl_setopt($curl,CURLOPT_RETURNTRANSFER,1);
+	  curl_setopt($curl,CURLOPT_CONNECTTIMEOUT,$timeout);
+	  curl_setopt($curl,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+
+	  curl_setopt($curl, CURLOPT_ENCODING,"");   
+	  curl_setopt($curl, CURLOPT_TIMEOUT,60);
+	  curl_setopt($curl, CURLOPT_FAILONERROR,true);
+	  curl_setopt($curl, CURLOPT_VERBOSE, true);
+
+	  $output = curl_exec($curl);
+	  
+	  if (curl_errno($curl)){
+
+	    curl_close($curl);
+	      return false;
+
+	  }
+	  else {
+
+	    curl_close($curl);
+	    return $output;
+
+	  }  
+
+	  return false;
+	}
 
     private static function curl_fetch_image($url) {
         $ch = curl_init();
